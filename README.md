@@ -20,7 +20,7 @@ cd amlogic-usbdl_s905_s905x_s905w
 4) S905X-H Dump Efuse
 5) S905W Dump BL1
 6) S905W Dump EFuse
-Please enter a menu option and enter or x to exit. 
+7) Please enter a menu option and enter or x to exit. 
 
 
 ## Disclaimer
