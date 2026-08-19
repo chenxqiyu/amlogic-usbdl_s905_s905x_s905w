@@ -1,0 +1,78 @@
+name: Build amlogic-usbdl
+
+on:
+  push:
+    branches: [main, master]
+    paths:
+      - 'src/**'
+      - 'payloads/**'
+      - '.github/workflows/build.yml'
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build amlogic-usbdl & payloads
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq \
+            libusb-1.0-0-dev \
+            gcc \
+            make \
+            gcc-aarch64-linux-gnu \
+            binutils-aarch64-linux-gnu
+
+      - name: Build amlogic-usbdl host tool
+        working-directory: src
+        run: |
+          make clean || true
+          make
+          file amlogic-usbdl
+
+      - name: Build s905x-h payloads
+        working-directory: payloads/s905x-h/src
+        run: |
+          make clean || true
+          CROSS_COMPILER=aarch64-linux-gnu- make
+          file memdump_BL1.bin memdump_efuse.bin
+
+      - name: Build s905 payloads
+        working-directory: payloads/s905/src
+        run: |
+          make clean || true
+          CROSS_COMPILER=aarch64-linux-gnu- make
+          file memdump_BL1.bin memdump_efuse.bin
+
+      - name: Build s905w payloads
+        working-directory: payloads/s905w/src
+        run: |
+          make clean || true
+          CROSS_COMPILER=aarch64-linux-gnu- make
+          file memdump_BL1.bin memdump_efuse.bin
+
+      - name: Stage build artifacts
+        run: |
+          mkdir -p dist/bin dist/payloads/s905x-h dist/payloads/s905 dist/payloads/s905w dist/scripts/s905x-h dist/usb_password
+          cp src/amlogic-usbdl dist/bin/
+          cp bin/update dist/bin/
+          cp payloads/s905x-h/bin/*.bin dist/payloads/s905x-h/
+          cp payloads/s905/bin/*.bin dist/payloads/s905/
+          cp payloads/s905w/bin/*.bin dist/payloads/s905w/
+          cp scripts/s905x-h/*.sh dist/scripts/s905x-h/
+          cp usb_password/password.bin dist/usb_password/
+          cp start.sh dist/
+          cp README.md dist/
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: amlogic-usbdl-build
+          path: dist/
+          retention-days: 30
